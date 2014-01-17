@@ -1,1 +1,3 @@
 *.pyc
+src/simpleargs.egg-info
+dist
