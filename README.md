@@ -7,7 +7,7 @@ Parsing command-line arguments is a frequent task. Python has a powerful argumen
 
 ### Installing and using
 
-SimpleArgs is on pypi, so give it a try with `pip install simpleargs`. To use simpleargs, just include the line `from simpleargs import argv`. Everything will be ready right out the gate (see *Examples* below).
+SimpleArgs is on pypi, so give it a try with `pip install simpleargs`. To use simpleargs, just include the line `from simpleargs import argv`. It's quite likely that everything will be already be ready to use with no configuration (see *Examples* below).
 
 ### Contributing
 
@@ -36,6 +36,7 @@ hello
 world
 hey
 > python simple.py -option setting these are args
+Here are your arguments:
 these
 are
 args
