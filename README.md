@@ -165,8 +165,6 @@ Test:
 ```
 > python alias.py -o true
 Option was true!
-> python alias.py --this_is_a_long_option=false
+> python alias.py --this_is_a_long_option false
 Option was false!
 ```
-
-Note that in the second case, we need an `=` in there, because otherwise it will interpret the presence of `this_is_a_long_option` as meaning it's true, and parse `false` as being part of the general arguments.

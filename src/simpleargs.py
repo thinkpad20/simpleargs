@@ -104,14 +104,14 @@ class SimpleArgs(object):
         else:
             return flag
 
-    def reset(self):
-        ''' resets the containers '''
+    def _reset(self):
+        ''' Resets the containers '''
         self._args = []
         self._options = {}
 
     def _parse(self):
         ''' Parses the argument vector. '''
-        self.reset()
+        self._reset()
         # is either none if we're not reading an option, or some string
         active_opt = None
         for flag in sys.argv[1:]:
@@ -189,21 +189,25 @@ class SimpleArgs(object):
 
     def _parse_setting_with_type(self, setting, _type, name=None):
         ''' Specialized behavior when we have specified a setting's type '''
-
-        if _type == bool:
-            if setting.lower() == "true":
-                return True
+        try:
+            if _type == bool:
+                if setting.lower() == "true":
+                    return True
+                else:
+                    return False
+                return self.parse_bool(setting)
+            elif _type == list:
+                return [self._auto_parse(setting)]
+            elif isinstance(_type, tuple) and _type[0] == list:
+                return [self._parse_setting_with_type(setting, _type[1])]
             else:
-                return False
-            return self.parse_bool(setting)
-        elif _type == list:
-            return [self._auto_parse(setting, name)]
-        elif isinstance(_type, tuple) and _type[0] == list:
-            return [self._parse_setting_with_type(setting, _type[1])]
-        else:
-            return _type(setting)
+                return _type(setting)
+        except ValueError:
+            _nm = "(for option %s) " % name if name is not None else ""
+            raise Exception("Failed to parse %s %s as %s" %
+                            (setting, _nm, _type))
 
-    def _auto_parse(self, setting, name=None):
+    def _auto_parse(self, setting):
         '''
         For numbers and bools, sees if they match and if so, converts them
         automagically.
@@ -211,22 +215,17 @@ class SimpleArgs(object):
         if self._no_auto_parse:
             return setting
 
-        def setit(val):
-            if name is not None:
-                self._set_type(name, type(val))
-            return val
-
         if setting.lower() == "true":
-            return setit(True)
+            return True
 
         if setting.lower() == "false":
-            return setit(False)
+            return False
 
         try:
-            return setit(int(setting))
+            return int(setting)
         except ValueError:
             try:
-                return setit(float(setting))
+                return float(setting)
             except ValueError:
                 return setting
 
@@ -238,7 +237,7 @@ class SimpleArgs(object):
         if name in self._type_map:
             return self._parse_setting_with_type(setting, self._type_map[name])
         else:
-            return self._auto_parse(setting, name)
+            return self._auto_parse(setting)
 
     def _get(self, attr, arg_type=None, default=None):
         if arg_type == bool:
