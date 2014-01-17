@@ -12,7 +12,6 @@ class SimpleArgs(object):
         self._strict = strict
         self._aliases = {}
         self._no_auto_parse = False
-        self._requireds = set()
 
         self._parse()
 
@@ -49,14 +48,6 @@ class SimpleArgs(object):
 
     def set_type(self, attr, _type):
         self._set_type(attr, _type)
-        self._parse()
-
-    def no_auto_parse(self):
-        self._no_auto_parse = True
-        self._parse()
-
-    def add_requirement(self, name):
-        self._requireds.add(name)
         self._parse()
 
     # PRIVATE METHODS
@@ -160,13 +151,7 @@ class SimpleArgs(object):
             if not self._is_list(active_opt):
                 self._set(active_opt, True)
 
-        missing = [r for r in self._requireds if r not in self._options]
-        if len(missing) > 0:
-            raise LookupError("Required options %s were missing" % missing)
-
     def _set(self, attr, setting):
-        if attr == setting:
-            raise Exception()
         attr = self._resolve(attr)
         self._options[attr] = setting
 
@@ -189,9 +174,8 @@ class SimpleArgs(object):
 
     def _parse_setting_with_type(self, setting, _type, name=None):
         ''' Specialized behavior when we have specified a setting's type '''
-
         if _type == bool:
-            if setting.lower() == "true":
+            if setting.lower() == "true" or int(setting) == 1:
                 return True
             else:
                 return False
@@ -238,7 +222,7 @@ class SimpleArgs(object):
         if name in self._type_map:
             return self._parse_setting_with_type(setting, self._type_map[name])
         else:
-            return self._auto_parse(setting, name)
+            return self._auto_parse(name, setting)
 
     def _get(self, attr, arg_type=None, default=None):
         if arg_type == bool:

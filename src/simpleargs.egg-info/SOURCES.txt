@@ -1,0 +1,7 @@
+MANIFEST.in
+setup.py
+src/simpleargs/simpleargs.py
+src/simpleargs.egg-info/PKG-INFO
+src/simpleargs.egg-info/SOURCES.txt
+src/simpleargs.egg-info/dependency_links.txt
+src/simpleargs.egg-info/top_level.txt
