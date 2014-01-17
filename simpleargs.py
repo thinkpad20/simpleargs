@@ -23,6 +23,9 @@ class SimpleArgs(object):
     def set_default(self, attr, default):
         self.default_map[attr] = default
 
+    def set_type(self, attr, _type):
+        self.type_map[attr] = _type
+
     def get_option(self, flag):
         '''
         Reads an option and depending on how it's written, returns
@@ -131,5 +134,8 @@ class SimpleArgs(object):
                 return self._args[item]
             else:
                 return None
+
+    def __iter__(self):
+        return self._args.__iter__()
 
 argv = SimpleArgs()
