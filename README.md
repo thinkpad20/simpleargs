@@ -20,7 +20,7 @@ for arg in argv:
 Run this with:
 
 ```
-> python arg1.py hello world hey
+> python simple.py hello world hey
 Here are your arguments:
 hello
 world
@@ -60,7 +60,7 @@ Let's look at some defaults!
 ```python
 from simpleargs import argv
 
-argv.add_default("name", "Allen")
+argv.set_default("name", "Allen")
 
 print "Hello, %s! How are you?" % argv.name
 ```
@@ -84,15 +84,15 @@ argv.set_type("age", int)
 if argv.age >= 21:
     print "Have a beer!"
 else:
-    print "Wait %s more years!" % (21 - age)
+    print "Wait %s more years!" % (21 - argv.age)
 ```
 
 Test it with:
 
 ```
-> python beerme.py --age 25
+> python beer.py --age 25
 Have a beer!
-> python beerme.py --age=19
+> python beer.py --age=19
 Wait 2 more years!
 ```
 
