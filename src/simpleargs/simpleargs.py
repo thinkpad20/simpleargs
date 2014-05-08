@@ -1,10 +1,14 @@
 ''' Simple argument parser for python '''
+import json
 import sys
 
 class SimpleArgs(object):
-    def __init__(self, strict=False):
-        self._called_with = sys.argv[0]
-        self._raw_args = sys.argv
+    def __init__(self, raw_args, strict=False):
+        try:
+            self._called_with = raw_args[0]
+        except IndexError:
+            self._called_with = ''
+        self._raw_args = raw_args
         self._options = {}
         self._args = []
         self._type_map = {}
@@ -12,42 +16,63 @@ class SimpleArgs(object):
         self._strict = strict
         self._aliases = {}
         self._no_auto_parse = False
+        self._requireds = set()
 
         self._parse()
 
     # PUBLIC METHODS
     def add_alias(self, name1, name2):
-        ''' Makes two flags equivalent, e.g. -f and --foo '''
+        ''' Makes two flags equivalent, e.g. -f and --foo.'''
         if name1 in self._aliases:
             if self._aliases == name2:
                 return
             else:
-                raise AssertionError("%s has already been assigned alias %s" %
+                raise ValueError("%s has already been assigned alias %s" %
                                     (name1, self._aliases[name1]))
-        self._aliases[name1] = name2
-        self._parse()
+        # See if this is an *actual* attribute on SimpleArgs.
+        try:
+            __getattribute__(self, name1)
+            raise ValueError('%s cannot be used as an alias.' % name1)
+        except:
+            self._aliases[name1] = name2
+            self._parse()
 
 
     def add_switch(self, *switches):
+        '''Sets an argument name to be a boolean switch.'''
         for switch in switches:
             self._set_type(switch, bool)
         self._parse()
 
     def add_list(self, *names):
+        '''Sets an argument name to be a list.'''
         for name in names:
             self._set_type(name, list)
         self._parse()
 
     def add_typed_list(self, name, _type):
+        '''Sets an argument name to be a list of the given type.'''
         self._set_type(name, (list, _type))
         self._parse()
 
     def set_default(self, attr, default):
+        '''Sets an argument name to map to a default value.'''
         self._default_map[attr] = default
         self._parse()
 
     def set_type(self, attr, _type):
+        '''Sets the expected type of an argument name.'''
         self._set_type(attr, _type)
+        self._parse()
+
+    def toggle_auto_parse(self):
+        '''Toggles the automatic parsing of numbers and booleans.'''
+        self._no_auto_parse = not self._no_auto_parse
+        self._parse()
+
+    def add_requirement(self, name):
+        '''Sets an argument to be required.'''
+        self._requireds.add(name)
         self._parse()
 
     # PRIVATE METHODS
@@ -61,12 +86,12 @@ class SimpleArgs(object):
         self._type_map[attr] = _type
 
     def _resolve(self, alias, seen_aliases=None):
-        ''' Recursively resolves an alias '''
+        '''Recursively resolves an alias. Converts hyphens to underscores.'''
         if seen_aliases is None:
             seen_aliases = set()
         result = self._aliases.get(alias)
         if result is None:
-            return alias
+            return alias.replace('-', '_')
         if result in seen_aliases:
             raise ValueError("Cycle detected in aliases: %s" % seen_aliases)
         seen_aliases.add(alias)
@@ -95,17 +120,17 @@ class SimpleArgs(object):
         else:
             return flag
 
-    def reset(self):
-        ''' resets the containers '''
+    def _reset(self):
+        ''' Resets the containers '''
         self._args = []
         self._options = {}
 
     def _parse(self):
         ''' Parses the argument vector. '''
-        self.reset()
+        self._reset()
         # is either none if we're not reading an option, or some string
         active_opt = None
-        for flag in sys.argv[1:]:
+        for flag in self._raw_args[1:]:
             # get options
             option = self._get_option(flag)
             if isinstance(option, tuple):
@@ -151,7 +176,12 @@ class SimpleArgs(object):
             if not self._is_list(active_opt):
                 self._set(active_opt, True)
 
+        missing = [r for r in self._requireds if r not in self._options]
+        if len(missing) > 0:
+            raise LookupError("Required options %s were missing" % missing)
+
     def _set(self, attr, setting):
+        '''Associates an attribute with a setting.'''
         attr = self._resolve(attr)
         self._options[attr] = setting
 
@@ -174,20 +204,27 @@ class SimpleArgs(object):
 
     def _parse_setting_with_type(self, setting, _type, name=None):
         ''' Specialized behavior when we have specified a setting's type '''
-        if _type == bool:
-            if setting.lower() == "true" or int(setting) == 1:
-                return True
+        try:
+            if _type == bool:
+                if setting.lower() == "true":
+                    return True
+                else:
+                    return False
+                return self.parse_bool(setting)
+            elif _type == list:
+                return [self._auto_parse(setting)]
+            elif isinstance(_type, tuple) and _type[0] == list:
+                return [self._parse_setting_with_type(setting, _type[1])]
+            elif _type == 'json':
+                return json.loads(setting)
             else:
-                return False
-            return self.parse_bool(setting)
-        elif _type == list:
-            return [self._auto_parse(setting, name)]
-        elif isinstance(_type, tuple) and _type[0] == list:
-            return [self._parse_setting_with_type(setting, _type[1])]
-        else:
-            return _type(setting)
+                return _type(setting)
+        except ValueError:
+            _nm = "(for option %s) " % name if name is not None else ""
+            raise Exception("Failed to parse %s %s as %s" %
+                            (setting, _nm, _type))
 
-    def _auto_parse(self, setting, name=None):
+    def _auto_parse(self, setting):
         '''
         For numbers and bools, sees if they match and if so, converts them
         automagically.
@@ -195,22 +232,17 @@ class SimpleArgs(object):
         if self._no_auto_parse:
             return setting
 
-        def setit(val):
-            if name is not None:
-                self._set_type(name, type(val))
-            return val
-
         if setting.lower() == "true":
-            return setit(True)
+            return True
 
         if setting.lower() == "false":
-            return setit(False)
+            return False
 
         try:
-            return setit(int(setting))
+            return int(setting)
         except ValueError:
             try:
-                return setit(float(setting))
+                return float(setting)
             except ValueError:
                 return setting
 
@@ -222,7 +254,7 @@ class SimpleArgs(object):
         if name in self._type_map:
             return self._parse_setting_with_type(setting, self._type_map[name])
         else:
-            return self._auto_parse(name, setting)
+            return self._auto_parse(setting)
 
     def _get(self, attr, arg_type=None, default=None):
         if arg_type == bool:
@@ -270,4 +302,4 @@ class SimpleArgs(object):
                 (self._called_with, self._args, self._options))
 
 
-argv = SimpleArgs()
+argv = SimpleArgs(sys.argv)

@@ -1,28 +1,62 @@
 # SimpleArgs
-## An easy way to parse arguments in python
+### the python argument parser you already know how to use!
 
 ### Motivation
 
-Parsing command-line arguments is a frequent task. Python has a powerful argument parser library, but it's often overkill and requires reading a lot of docs and somewhat tedious configuration. This aims to make a simple way to do the same thing, in as intuitive a manner possible. Most arguments are parsed without any configuration at all, simply ending up as boolean flags or key/value pairs as appropriate. Numbers and booleans are parsed automatically. Some more advanced features like lists, aliases, required arguments, etc are also easily available.
+Parsing command-line arguments is a frequent task. Python has a powerful argument parser library, and there are other alternatives like docopt. But these all require reading a lot of docs and learning new APIs. They're often overkill for quick-and-dirty scripts where you just need to grab a few key pieces of information. SimpleArgs aims to let you access your arguments in as simple and intuitive a manner possible. You can get 90% of the way there just by writing:
+
+```python
+from simpleargs import argv
+```
+
+Most arguments are parsed without any configuration at all, simply ending up as boolean flags or key/value pairs as appropriate. Numbers and booleans are parsed automatically. Some more advanced features like lists, aliases, required arguments, etc are also easily available.
 
 ### Installing and using
 
-SimpleArgs is on pypi, so give it a try with `pip install simpleargs`. To use simpleargs, just include the line `from simpleargs import argv`. It's quite likely that everything will be already be ready to use with no configuration (see *Examples* below).
-
-### Contributing
-
-This is very new and very experimental, so play around with it and feel free to submit all kinds of pull requests!
+SimpleArgs is on pypi, so give it a try with `pip install simpleargs`. It's tiny (~36kb) and has no external dependencies.
 
 ### Examples
 
 Let's see it in action!
+
+#### Echo program
+
+```python
+from simpleargs import argv
+print ' '.join(argv)
+```
+
+Running it:
+
+```
+> python echo.py hello world!
+hello world!
+```
+
+#### Simple flask server:
+
+```python
+from flask import Flask
+from simpleargs import argv
+
+app = Flask(argv.name or __name__)
+app.route('/<name>/')(lambda name: 'Hello, %s' % name)
+app.run(port=argv.port or 7890, use_reloader=argv.use_reloader)
+```
+
+Running it:
+
+```
+> python flask_ex.py --port 8080
+ * Running on http://127.0.0.1:8080/
+```
 
 #### General arguments (not key-value pairs)
 
 ```python
 from simpleargs import argv
 
-print "Here are your arguments:"
+print 'Here are your arguments:'
 for arg in argv:
     print arg
 ```
@@ -49,12 +83,12 @@ The first is self-explanatory and equivalent to just using `sys.argv`. In the se
 ```python
 from simpleargs import argv
 
-if argv.choice == "correct":
-    print "You have chosen wisely"
+if argv.choice == 'correct':
+    print 'You have chosen wisely'
 elif argv.be_nice:
     print "OK, I'll let it slide"
 else:
-    print "Oh noes!"
+    print 'Oh noes!'
 ```
 
 Trying it out:
@@ -77,9 +111,9 @@ So you can see that single `--flag`s are treated as bools by default. Also, you 
 ```python
 from simpleargs import argv
 
-argv.set_default("name", "Allen")
+argv.set_default('name', 'Allen')
 
-print "Hello, %s! How are you?" % argv.name
+print 'Hello, %s! How are you?' % argv.name
 ```
 
 Testing it:
@@ -97,9 +131,9 @@ Hello, Scott! How are you?
 from simpleargs import argv
 
 if argv.age >= 21:
-    print "Have a beer!"
+    print 'Have a beer!'
 else:
-    print "Wait %s more years!" % (21 - argv.age)
+    print 'Wait %s more years!' % (21 - argv.age)
 ```
 
 Test it with:
@@ -111,7 +145,7 @@ Have a beer!
 Wait 2 more years!
 ```
 
-Ints, floats and bools are automatically parsed as such, if possible. If this behavior is undesirable, either turn off autoparsing with `argv.no_auto_parse()`, or set the type manually (for example, with `argv.set_type("zipcode", str)`), which will override the autoparsing.
+Ints, floats and bools are automatically parsed as such, if possible. If this behavior is undesirable, either turn off autoparsing with `argv.no_auto_parse()`, or set the type manually (for example, with `argv.set_type('zipcode', str)`), which will override the autoparsing.
 
 #### Lists
 
@@ -120,15 +154,15 @@ We can have keys map to lists if we declare them as such:
 ```python
 from simpleargs import argv
 
-argv.add_list("names")
-argv.add_list("ages") # we can also specify multiple attributes in `add_list`
+argv.add_list('names')
+argv.add_list('ages') # we can also specify multiple attributes in `add_list`
 
 names_ages = sorted(zip(argv.names, argv.ages), key=lambda x: x[1])
 
 for name, age in names_ages:
-    print "%s is %s years old" % (name, age)
+    print '%s is %s years old' % (name, age)
 
-print "%s is the oldest!" % names_ages[-1][0]
+print '%s is the oldest!' % names_ages[-1][0]
 ```
 
 Test:
@@ -148,17 +182,17 @@ Sometimes we want to make a verbose option easy to read but easy to write when w
 ```python
 from simpleargs import argv
 
-argv.add_alias("o", "this_is_a_long_option")
+argv.add_alias('o', 'this_is_a_long_option')
 
 if argv.o:
-    print "Option was true!"
+    print 'Option was true!'
 else:
-    print "Option was false!"
+    print 'Option was false!'
 
 if argv.this_is_a_long_option:
-    print "Option was true!"
+    print 'Option was true!'
 else:
-    print "Option was false!"
+    print 'Option was false!'
 ```
 
 Test:
@@ -169,3 +203,7 @@ Option was true!
 > python alias.py --this_is_a_long_option false
 Option was false!
 ```
+
+### Contributing
+
+This is very new and very experimental, so play around with it. Feel free to submit all kinds of pull requests!
