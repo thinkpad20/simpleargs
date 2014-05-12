@@ -185,23 +185,25 @@ from simpleargs import argv
 argv.add_alias('o', 'this_is_a_long_option')
 
 if argv.o:
-    print 'Option was true!'
+    print 'Short option was true!'
 else:
-    print 'Option was false!'
+    print 'Short option was false!'
 
 if argv.this_is_a_long_option:
-    print 'Option was true!'
+    print 'Long option was true!'
 else:
-    print 'Option was false!'
+    print 'Long option was false!'
 ```
 
 Test:
 
 ```
 > python alias.py -o true
-Option was true!
+Short option was true!
+Long option was true!
 > python alias.py --this_is_a_long_option false
-Option was false!
+Short option was false!
+Long option was false!
 ```
 
 ### Contributing
