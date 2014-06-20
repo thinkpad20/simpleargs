@@ -2,6 +2,7 @@
 import json
 import sys
 
+
 class SimpleArgs(object):
     def __init__(self, raw_args, strict=False):
         try:
@@ -28,7 +29,7 @@ class SimpleArgs(object):
                 return
             else:
                 raise ValueError("%s has already been assigned alias %s" %
-                                    (name1, self._aliases[name1]))
+                                 (name1, self._aliases[name1]))
         # See if this is an *actual* attribute on SimpleArgs.
         try:
             __getattribute__(self, name1)
@@ -36,7 +37,6 @@ class SimpleArgs(object):
         except:
             self._aliases[name1] = name2
             self._parse()
-
 
     def add_switch(self, *switches):
         '''Sets an argument name to be a boolean switch.'''
@@ -79,8 +79,8 @@ class SimpleArgs(object):
 
     def _set_type(self, attr, _type):
         assert isinstance(attr, basestring), "Name must be a string"
-        if self._strict and attr in self._type_map and \
-          self._type_map[attr] != _type:
+        if (self._strict and attr in self._type_map and
+                self._type_map[attr] != _type):
             raise AssertionError("%s has already been assigned type %s" %
                                  (attr, self._type_map[attr]))
         self._type_map[attr] = _type
@@ -279,8 +279,8 @@ class SimpleArgs(object):
             return self.__getattribute__(attr)
         except:
             return self._get(self._resolve(attr),
-                        arg_type=self._type_of(attr),
-                        default=self._default(attr))
+                             arg_type=self._type_of(attr),
+                             default=self._default(attr))
 
     def __getitem__(self, item):
         if isinstance(item, basestring):
