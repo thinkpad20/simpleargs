@@ -2,6 +2,7 @@ import unittest
 
 from simpleargs import SimpleArgs
 
+
 class SimpleArgsTest(unittest.TestCase):
     '''Tests the expected behavior of SimpleArgs'''
 
